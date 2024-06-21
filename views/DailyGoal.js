@@ -1,25 +1,31 @@
 import { Button, SafeAreaView, StyleSheet, Text } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 export default function DailyGoal() {
+    const navigation = useNavigation();
     const [minutes, setMinutes] = useState(null);
-    useEffect(() => {
+    useFocusEffect(() => {
+        //AsyncStorage.clear()
         getData();
-    })
-
+    });
     const getData = async () => {
         try {
             const value = await AsyncStorage.getItem('daily-minutes-goal');
             if (value !== null) {
-                console.log("ok", value);
                 setMinutes(value);
+            } else {
+                navigation.navigate('SetGoal');
             }
         } catch (e) {
             console.error('data not found');
         }
     };
+    const onDone = () => {
+        navigation.navigate('Done');
+    }
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.title}>Today Reading Goal:</Text>
@@ -35,7 +41,7 @@ export default function DailyGoal() {
                 color='#20B2AA'
                 title='DONE!'
                 accessibilityLabel='Done Button'
-                onPress={() => console.log('todo')}
+                onPress={onDone}
             />
         </SafeAreaView>
     );

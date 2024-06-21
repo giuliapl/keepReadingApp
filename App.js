@@ -2,9 +2,9 @@
 import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Home from './views/Home';
 import SetGoal from './views/SetGoal';
 import DailyGoal from './views/DailyGoal';
+import Done from './views/Done';
 
 export default function App() {
   const Stack = createNativeStackNavigator();
@@ -13,17 +13,17 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator>
         <Stack.Screen
-          name="Home"
-          component={Home}
-          options={{ title: 'KeepReading' }}
+          name="DailyGoal"
+          component={DailyGoal}
         />
         <Stack.Screen
           name="SetGoal"
           component={SetGoal}
+          options={{ title: 'KeepReading' }}
         />
         <Stack.Screen
-          name="DailyGoal"
-          component={DailyGoal}
+          name="Done"
+          component={Done}
         />
       </Stack.Navigator>
     </NavigationContainer>

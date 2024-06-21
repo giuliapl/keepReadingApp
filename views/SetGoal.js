@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, SafeAreaView, StyleSheet, Text, TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -22,6 +22,18 @@ export default function SetGoal() {
             console.error('data not stored correctly')
         }
     };
+    const getData = async () => {
+        try {
+            const hasPrevGoal = await AsyncStorage.getItem('daily-minutes-goal');
+            if (hasPrevGoal) navigation.navigate('DailyGoal');
+        } catch (e) {
+            console.error('data not stored correctly')
+        }
+    };
+
+    useEffect(() => {
+        getData();
+    }, [])
 
     return (
         <SafeAreaView style={styles.container}>
@@ -54,6 +66,7 @@ export default function SetGoal() {
                             title='SEND'
                             accessibilityLabel='Send Goal Button'
                             onPress={onSend}
+                            disabled={!minutes}
                         />
                     </>
             }
@@ -70,7 +83,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 20,
-        fontWeight: 'bolder',
+        fontWeight: 'bold',
         paddingBottom: 20,
     },
     input: {
@@ -82,7 +95,6 @@ const styles = StyleSheet.create({
     },
     desc: {
         fontSize: 18,
-        fontWeight: 'bold',
         textAlign: 'center',
         paddingBottom: 20,
     },
