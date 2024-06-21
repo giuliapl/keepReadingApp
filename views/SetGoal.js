@@ -1,14 +1,26 @@
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
 import { Button, SafeAreaView, StyleSheet, Text, TextInput } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SetGoal() {
-    const [minutes, setMinutes] = useState(null);
+    const [minutes, setMinutes] = useState('');
     const [showModal, setShowModal] = useState(false);
     const onChangeText = (e) => { setMinutes(e) };
     const navigation = useNavigation();
     const onPress = () => {
         navigation.navigate('DailyGoal');
+    };
+    const onSend = () => {
+        if (minutes) storeData(minutes);
+        setShowModal((prev) => !prev);
+    };
+    const storeData = async (value) => {
+        try {
+            await AsyncStorage.setItem('daily-minutes-goal', value);
+        } catch (e) {
+            console.error('data not stored correctly')
+        }
     };
 
     return (
@@ -41,7 +53,7 @@ export default function SetGoal() {
                             color='#20B2AA'
                             title='SEND'
                             accessibilityLabel='Send Goal Button'
-                            onPress={() => setShowModal((prev) => !prev)}
+                            onPress={onSend}
                         />
                     </>
             }
@@ -58,7 +70,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 20,
-        fontWeight: 'bold',
+        fontWeight: 'bolder',
         paddingBottom: 20,
     },
     input: {
@@ -70,7 +82,7 @@ const styles = StyleSheet.create({
     },
     desc: {
         fontSize: 18,
-        fontWeight: 'bolder',
+        fontWeight: 'bold',
         textAlign: 'center',
         paddingBottom: 20,
     },
