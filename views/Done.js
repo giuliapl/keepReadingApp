@@ -2,8 +2,8 @@ import { Button, SafeAreaView, StyleSheet, Text, TextInput } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-
-export const DONE_DATES = 'done-dates';
+import { DAILY_MINUTES_GOAL, DONE_DATES, LAST_CHECK_DATE } from '../constants/storage.const';
+import { INCREMENT_DECREMENT_PERCENTAGE } from './DailyGoal';
 
 export default function Done() {
     const navigation = useNavigation();
@@ -26,11 +26,18 @@ export default function Done() {
                 const serializedWrapper = JSON.stringify(wrapper);
                 await AsyncStorage.setItem(DONE_DATES, serializedWrapper);
             }
+            setNewGoal(value);
             navigation.navigate('DailyGoal', { goalMet: true });
         } catch (e) {
             console.error('data not stored correctly')
         }
     };
+
+    const setNewGoal = async (todayMinutes) => {
+        const newDailyGoal = parseInt(todayMinutes) + parseInt(todayMinutes * INCREMENT_DECREMENT_PERCENTAGE);
+        await AsyncStorage.setItem(DAILY_MINUTES_GOAL, newDailyGoal.toString());
+        await AsyncStorage.setItem(LAST_CHECK_DATE, new Date().toLocaleDateString());
+    }
 
     return (<SafeAreaView style={styles.container}>
         <Text style={styles.title}>Congratulations!</Text>
