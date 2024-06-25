@@ -44,7 +44,7 @@ export default function Done() {
         <Text style={styles.desc}>How long did you read today?</Text>
         <TextInput
             style={styles.input}
-            keyboardType='numeric'
+            inputMode='numeric'
             placeholder='I read for...'
             onChangeText={onChangeText}
             value={minutes}
@@ -53,7 +53,7 @@ export default function Done() {
         <Button
             color='#20B2AA'
             title='SEND'
-            accessibilityLabel='Send Actual Minutes Button'
+            aria-label='Send Actual Minutes Button'
             onPress={onPress}
             disabled={!minutes}
         />

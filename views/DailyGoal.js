@@ -1,9 +1,10 @@
 import { Button, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { DAILY_MINUTES_GOAL, DONE_DATES, LAST_CHECK_DATE } from '../constants/storage.const';
+import { ImageBackground } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 export const INCREMENT_DECREMENT_PERCENTAGE = 0.10;
 
@@ -62,8 +63,9 @@ export default function DailyGoal() {
     const onDone = () => {
         navigation.navigate('Done');
     }
+
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.mainContainer}>
             {
                 isGoalMet ?
                     <>
@@ -72,47 +74,55 @@ export default function DailyGoal() {
                         <Button
                             color='#20B2AA'
                             title='clear!'
-                            accessibilityLabel='clear storage Button'
+                            aria-label='clear storage Button'
                             onPress={async () => await AsyncStorage.clear()}
                         />
                     </>
                     :
                     <>
-                        <View style={styles.container}>
-                            <Text style={styles.title}>Today Reading Goal:</Text>
-                            <Text fontSize={18} paddingBottom={30}>{minutes} minutes</Text>
-                            <FontAwesome5 name="hourglass-start" size={200} />
-                            {/* <Button
+                        <ImageBackground style={styles.image} resizeMode='cover'
+                            source={require('../assets/images/paper.jpg')}>
+                            <View style={styles.container} height={'80%'}>
+                                <Text style={styles.title}>Today Reading Goal:</Text>
+                                <Text style={{ paddingBottom: 30, fontSize: 30 }}>{minutes} minutes</Text>
+                                <FontAwesome5 name="hourglass-start" size={200} />
+                                {/* <Button
                                 color='#20B2AA'
                                 title='ENTER DO NOT DISTURB MODE'
-                                accessibilityLabel='Do Not Disturb Mode Button'
+                                aria-label='Do Not Disturb Mode Button'
                                 onPress={() => console.log('todo')}
                                 /> */}
-                            <Button
-                                color='#20B2AA'
-                                title='DONE!'
-                                accessibilityLabel='Done Button'
-                                onPress={onDone}
-                            />
-                            <Button
-                                color='#20B2AA'
-                                title='clear!'
-                                accessibilityLabel='clear storage Button'
-                                onPress={async () => await AsyncStorage.clear()}
-                            />
-                        </View>
+                                <View style={{ width: 150, marginTop: 30 }}>
+                                    <Button
+                                        color='#bf6204'
+                                        title='DONE'
+                                        aria-label='Done Button'
+                                        onPress={onDone}
+                                    />
+                                </View>
+                                {/* <Button
+                                    color='#bf6204'
+                                    title='clear'
+                                    aria-label='clear storage Button'
+                                    onPress={async () => await AsyncStorage.clear()}
+                                /> */}
+                            </View>
+                        </ImageBackground>
                     </>
             }
-        </SafeAreaView>
+        </SafeAreaView >
     );
 }
 
 const styles = StyleSheet.create({
+    mainContainer: {
+        alignItems: 'center',
+        flexDirection: 'column',
+    },
     container: {
         alignItems: 'center',
-        justifyContent: 'center',
         flexDirection: 'column',
-        padding: 30,
+        height: '50%',
     },
     title: {
         fontSize: 20,

@@ -35,21 +35,23 @@ export default function SetGoal() {
     }, []);
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.mainContainer}>
             {
                 showModal && minutes ?
                     <>
                         <ImageBackground style={styles.image} resizeMode='cover'
                             source={require('../assets/images/begin-story.jpg')}>
                             {/* todo - image attribution: <a href="https://www.freepik.com/free-photo/magic-fairytale-book-concept_38110873.htm#fromView=search&page=1&position=0&uuid=8fcd2fa7-7f8c-4087-9e7e-6f8101cffaf2">Image by freepik</a> */}
-                            <View style={styles.container}>
+                            <View style={styles.container} height={'80%'}>
                                 <Text style={styles.title} padding={30}>How does it work?</Text>
-                                <Text style={styles.desc} padding={30}>Your daily goal will slowly increase basing upon how many minutes you manage to read every day.</Text>
-                                <Text style={styles.desc} padding={30}>This will help you stay consistent and read more, day by day.</Text>
+                                <Text style={styles.desc}>
+                                    Your daily goal will slowly increase basing upon how many minutes you manage to read every day. {"\n"}
+                                This will help you stay consistent and read more, day by day.
+                                </Text>
                                 <Button
                                     color='#bf6204'
                                     title='MAKE THE STORY BEGIN'
-                                    accessibilityLabel='Send Goal Button'
+                                    aria-label='Send Goal Button'
                                     onPress={onPress}
                                 />
                             </View>
@@ -71,13 +73,15 @@ export default function SetGoal() {
                                     onChangeText={onChangeText}
                                 />
                                 <Text style={{ color: '#ffff', fontSize: 16, paddingBottom: 30 }}>minutes</Text>
-                                <Button
-                                    color='#2cc793'
-                                    title='SEND'
-                                    accessibilityLabel='Send Goal Button'
-                                    onPress={onSend}
-                                    disabled={!minutes}
-                                />
+                                <View style={{ width:150, marginTop: 30 }}>
+                                    <Button
+                                        color='#bf6204'
+                                        title='SEND'
+                                        aria-label='Send Goal Button'
+                                        onPress={onSend}
+                                        disabled={!minutes}
+                                    />
+                                </View>
                             </View>
                         </ImageBackground>
                     </>
@@ -87,10 +91,14 @@ export default function SetGoal() {
 }
 
 const styles = StyleSheet.create({
+    mainContainer: {
+        alignItems: 'center',
+        flexDirection: 'column',
+    },
     container: {
         alignItems: 'center',
-        justifyContent: 'center',
         flexDirection: 'column',
+        height: '50%',
     },
     title: {
         fontSize: 20,
@@ -112,6 +120,8 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         paddingBottom: 20,
         color: 'white',
+        padding: 30,
+        marginBottom: 30,
     },
     image: {
         height: '100%',
