@@ -1,10 +1,9 @@
-import { Button, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Button, Easing, Image, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { DAILY_MINUTES_GOAL, DONE_DATES, LAST_CHECK_DATE } from '../constants/storage.const';
 import { ImageBackground } from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons';
 
 export const INCREMENT_DECREMENT_PERCENTAGE = 0.10;
 
@@ -18,6 +17,7 @@ export default function DailyGoal() {
         handleGoal();
     }, [])
     useFocusEffect(() => {
+        spin();
         getData();
         if (!params?.goalMet) {
             checkStorageGoalMet();
@@ -63,6 +63,20 @@ export default function DailyGoal() {
     const onDone = () => {
         navigation.navigate('Done');
     }
+    spinValue = new Animated.Value(0);
+    const spin = () => {
+        spinValue.setValue(0);
+        Animated.loop(Animated.timing(
+            spinValue,
+            {
+                toValue: 1,
+                duration: 5000,
+                easing: Easing.linear,
+                useNativeDriver: true
+            }
+        )).start(() => spin());
+    };
+    const rotate = this.spinValue.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
 
     return (
         <SafeAreaView style={styles.mainContainer}>
@@ -85,7 +99,10 @@ export default function DailyGoal() {
                             <View style={styles.container} height={'80%'}>
                                 <Text style={styles.title}>Today Reading Goal:</Text>
                                 <Text style={{ paddingBottom: 30, fontSize: 30 }}>{minutes} minutes</Text>
-                                <FontAwesome5 name="hourglass-start" size={200} />
+                                <Animated.View style={{ transform: [{ rotate }] }}>
+                                    {/* todo - image attribution: <a href="https://www.vecteezy.com/free-vector/skull">Skull Vectors by Vecteezy</a> */}
+                                    <Image source={require('../assets/images/hourglass-decor.png')} style={{ width: 250, height: 250 }} />
+                                </Animated.View>
                                 {/* <Button
                                 color='#20B2AA'
                                 title='ENTER DO NOT DISTURB MODE'
