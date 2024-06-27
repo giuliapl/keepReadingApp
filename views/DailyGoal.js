@@ -13,12 +13,14 @@ export default function DailyGoal() {
     const params = route.params;
     const [minutes, setMinutes] = useState(null);
     const [isGoalMet, setIsGoalMet] = useState(false);
+    const [totalMinutes, setTotalMinutes] = useState();
     useEffect(() => {
         handleGoal();
     }, [])
     useFocusEffect(() => {
         spin();
         getData();
+        getTotalMinutes();
         if (!params?.goalMet) {
             checkStorageGoalMet();
         } else {
@@ -60,6 +62,13 @@ export default function DailyGoal() {
             console.error('data not found');
         }
     };
+    const getTotalMinutes = async () => {
+        const data = await AsyncStorage.getItem(DONE_DATES);
+        const wrapper = JSON.parse(data);
+        const minutesList = wrapper?.completed?.map((obj) => obj.minutes);
+        const total = minutesList?.reduce((accumulator, currentValue) => parseInt(accumulator) + parseInt(currentValue));
+        setTotalMinutes(total);
+    }
     const onDone = () => {
         navigation.navigate('Done');
     }
@@ -83,8 +92,16 @@ export default function DailyGoal() {
             {
                 isGoalMet ?
                     <>
-                        <Text style={styles.title}>Cheers!</Text>
-                        <Text fontSize={18} paddingBottom={30}>You have completed your daily goal</Text>
+                        <View>
+                            <Text style={styles.title}>Cheers!</Text>
+                            <Text fontSize={18} paddingBottom={30}>You have completed your daily goal</Text>
+                        </View>
+
+                        <View style={styles.container}>
+                            <Text style={styles.title}>Total time spent reading</Text>
+                            <Text fontSize={18} paddingBottom={30}>{totalMinutes} minutes</Text>
+                        </View>
+
                         <Button
                             color='#20B2AA'
                             title='clear!'
@@ -103,12 +120,6 @@ export default function DailyGoal() {
                                     {/* todo - image attribution: <a href="https://www.vecteezy.com/free-vector/skull">Skull Vectors by Vecteezy</a> */}
                                     <Image source={require('../assets/images/hourglass-decor.png')} style={{ width: 250, height: 250 }} />
                                 </Animated.View>
-                                {/* <Button
-                                color='#20B2AA'
-                                title='ENTER DO NOT DISTURB MODE'
-                                aria-label='Do Not Disturb Mode Button'
-                                onPress={() => console.log('todo')}
-                                /> */}
                                 <View style={{ width: 150, marginTop: 30 }}>
                                     <Button
                                         color='#bf6204'
