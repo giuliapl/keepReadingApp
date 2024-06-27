@@ -1,9 +1,10 @@
-import { Animated, Button, Easing, Image, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Button, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { DAILY_MINUTES_GOAL, DONE_DATES, LAST_CHECK_DATE } from '../constants/storage.const';
-import { ImageBackground } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 export const INCREMENT_DECREMENT_PERCENTAGE = 0.10;
 
@@ -13,12 +14,11 @@ export default function DailyGoal() {
     const params = route.params;
     const [minutes, setMinutes] = useState(null);
     const [isGoalMet, setIsGoalMet] = useState(false);
-    const [totalMinutes, setTotalMinutes] = useState();
+    const [totalMinutes, setTotalMinutes] = useState(0);
     useEffect(() => {
         handleGoal();
     }, [])
     useFocusEffect(() => {
-        spin();
         getData();
         getTotalMinutes();
         if (!params?.goalMet) {
@@ -67,25 +67,11 @@ export default function DailyGoal() {
         const wrapper = JSON.parse(data);
         const minutesList = wrapper?.completed?.map((obj) => obj.minutes);
         const total = minutesList?.reduce((accumulator, currentValue) => parseInt(accumulator) + parseInt(currentValue));
-        setTotalMinutes(total);
+        if (total) setTotalMinutes(total);
     }
     const onDone = () => {
         navigation.navigate('Done');
     }
-    spinValue = new Animated.Value(0);
-    const spin = () => {
-        spinValue.setValue(0);
-        Animated.loop(Animated.timing(
-            spinValue,
-            {
-                toValue: 1,
-                duration: 5000,
-                easing: Easing.linear,
-                useNativeDriver: true
-            }
-        )).start(() => spin());
-    };
-    const rotate = this.spinValue.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
 
     return (
         <SafeAreaView style={styles.mainContainer}>
@@ -96,12 +82,6 @@ export default function DailyGoal() {
                             <Text style={styles.title}>Cheers!</Text>
                             <Text fontSize={18} paddingBottom={30}>You have completed your daily goal</Text>
                         </View>
-
-                        <View style={styles.container}>
-                            <Text style={styles.title}>Total time spent reading</Text>
-                            <Text fontSize={18} paddingBottom={30}>{totalMinutes} minutes</Text>
-                        </View>
-
                         <Button
                             color='#20B2AA'
                             title='clear!'
@@ -111,31 +91,21 @@ export default function DailyGoal() {
                     </>
                     :
                     <>
-                        <ImageBackground style={styles.image} resizeMode='cover'
-                            source={require('../assets/images/paper.jpg')}>
-                            <View style={styles.container} height={'80%'}>
-                                <Text style={styles.title}>Today Reading Goal:</Text>
-                                <Text style={{ paddingBottom: 30, fontSize: 30 }}>{minutes} minutes</Text>
-                                <Animated.View style={{ transform: [{ rotate }] }}>
-                                    {/* todo - image attribution: <a href="https://www.vecteezy.com/free-vector/skull">Skull Vectors by Vecteezy</a> */}
-                                    <Image source={require('../assets/images/hourglass-decor.png')} style={{ width: 250, height: 250 }} />
-                                </Animated.View>
-                                <View style={{ width: 150, marginTop: 30 }}>
-                                    <Button
-                                        color='#bf6204'
-                                        title='DONE'
-                                        aria-label='Done Button'
-                                        onPress={onDone}
-                                    />
+                        <LinearGradient start={{ x: 1.5, y: 0.5 }} colors={['#ff5c83', '#ffb688']} style={{ height: '100%', width: '100%' }}>
+                            <View style={styles.container}>
+                                <View style={styles.upper}>
+                                    <Text style={styles.title}>Today Reading Goal:</Text>
+                                    <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#ffff' }}>{minutes} minutes</Text>
                                 </View>
-                                {/* <Button
-                                    color='#bf6204'
-                                    title='clear'
-                                    aria-label='clear storage Button'
-                                    onPress={async () => await AsyncStorage.clear()}
-                                /> */}
+                                <View style={styles.middle} elevation={5} onPress={onDone}>
+                                    <FontAwesome5 name="check" size={50} color={'#ffff'} />
+                                </View>
+                                <View style={styles.lower}>
+                                    <Text>Total time spent reading since using the app</Text>
+                                    <Text fontSize={18} paddingBottom={30}>{totalMinutes} minutes</Text>
+                                </View>
                             </View>
-                        </ImageBackground>
+                        </LinearGradient>
                     </>
             }
         </SafeAreaView >
@@ -150,18 +120,47 @@ const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
         flexDirection: 'column',
-        height: '50%',
+        width: '100%',
+        height: '100%',
     },
     title: {
-        fontSize: 20,
-        fontWeight: 'bold',
+        fontSize: 30,
         paddingBottom: 20,
+        color: '#ffff'
     },
-    image: {
-        height: '100%',
+    upper: {
+        height: '40%',
         width: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    middle: {
+        width: '20%',
+        height: '10.5%',
+        borderRadius: 200,
+        position: 'absolute',
+        top: 260,
+        zIndex: 999,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#ed4c72',
+        shadowColor: '#910936',
+        shadowOffset: {
+            width: 3,
+            height: 3
+        },
+        shadowRadius: 5,
+        shadowOpacity: .5
+    },
+    lower: {
+        width: '100%',
+        height: '60%',
+        borderTopLeftRadius: 60,
+        borderTopRightRadius: 60,
+        backgroundColor: '#f5efe1',
+        position: 'relative',
         alignItems: 'center',
         justifyContent: 'center',
-        flexDirection: 'column',
-    },
-});
+    }
+})
