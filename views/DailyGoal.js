@@ -1,4 +1,4 @@
-import { Button, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Button, Modal, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -15,6 +15,7 @@ export default function DailyGoal() {
     const [minutes, setMinutes] = useState(null);
     const [isGoalMet, setIsGoalMet] = useState(false);
     const [totalMinutes, setTotalMinutes] = useState(0);
+    const [modalVisible, setModalVisible] = useState(false);
     useEffect(() => {
         handleGoal();
     }, [])
@@ -70,7 +71,8 @@ export default function DailyGoal() {
         if (total) setTotalMinutes(total);
     }
     const onDone = () => {
-        navigation.navigate('Done');
+        // navigation.navigate('Done');
+        setModalVisible(true);
     }
 
     return (
@@ -97,17 +99,43 @@ export default function DailyGoal() {
                                     <Text style={styles.title}>Today Reading Goal:</Text>
                                     <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#ffff' }}>{minutes} minutes</Text>
                                 </View>
-                                <View style={styles.middle} elevation={5} onPress={onDone}>
+                                <Pressable style={styles.middle} elevation={5} onPress={onDone}>
                                     <FontAwesome5 name="check" size={50} color={'#ffff'} />
-                                </View>
+                                </Pressable>
                                 <View style={styles.lower}>
-                                    <Text>Total time spent reading since using the app</Text>
-                                    <Text fontSize={18} paddingBottom={30}>{totalMinutes} minutes</Text>
+                                    <View elevation={5} style={styles.card}>
+                                        <Text style={styles.cardContent}>Total time spent reading since day one:</Text>
+                                        <Text style={styles.cardContentDesc}>{totalMinutes} minutes</Text>
+                                    </View>
                                 </View>
                             </View>
                         </LinearGradient>
                     </>
             }
+            <Modal
+                animationType={'fade'}
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => {
+                    setModalVisible(false);
+                }}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalView}>
+                        <Text style={styles.modalText}>Hello World!</Text>
+                        <Pressable
+                            style={[styles.button, styles.buttonClose]}
+                            onPress={() => setModalVisible(!modalVisible)}>
+                            <Text style={styles.textStyle}>Hide Modal</Text>
+                        </Pressable>
+                    </View>
+                </View>
+            </Modal>
+            <Pressable
+                style={[styles.button, styles.buttonOpen]}
+                onPress={() => setModalVisible(true)}>
+                <Text style={styles.textStyle}>Show Modal</Text>
+            </Pressable>
         </SafeAreaView >
     );
 }
@@ -129,7 +157,7 @@ const styles = StyleSheet.create({
         color: '#ffff'
     },
     upper: {
-        height: '40%',
+        height: '50%',
         width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
@@ -139,7 +167,7 @@ const styles = StyleSheet.create({
         height: '10.5%',
         borderRadius: 200,
         position: 'absolute',
-        top: 260,
+        top: 340,
         zIndex: 999,
         display: 'flex',
         justifyContent: 'center',
@@ -155,12 +183,93 @@ const styles = StyleSheet.create({
     },
     lower: {
         width: '100%',
-        height: '60%',
+        height: '50%',
         borderTopLeftRadius: 60,
         borderTopRightRadius: 60,
-        backgroundColor: '#f5efe1',
+        backgroundColor: '#ffff',
         position: 'relative',
         alignItems: 'center',
         justifyContent: 'center',
-    }
+        gap: 25,
+        marginTop: 10,
+    },
+    card: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#ffff',
+        height: '50%',
+        width: '80%',
+        borderRadius: 50,
+        padding: 20,
+        shadowColor: '#910936',
+    },
+    cardContent: {
+        color: '#ff5c83',
+        fontSize: 22,
+        textAlign: 'center',
+        padding: 10,
+        fontWeight: 'bold'
+    },
+    cardContentDesc: {
+        color: '#ff5c83',
+        fontWeight: 'bold',
+        fontSize: 20,
+        textAlign: 'center',
+        padding: 10,
+    },
+    // modalContainer: {
+    //     position: 'absolute',
+    //     width: '100%',
+    //     height: '100%',
+    //     justifyContent: 'center',
+    //     backgroundColor: 'rgba(100,100,100, 0.5)',
+    //     padding: 20,
+    // },
+    modalContainer: {
+        position: 'absolute',
+        width: '100%',
+        height: '100%',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(100,100,100, 0.5)',
+        padding: 20,
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 22,
+      },
+      modalView: {
+        margin: 20,
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 35,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+          width: 0,
+          height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+      },
+      button: {
+        borderRadius: 20,
+        padding: 10,
+        elevation: 2,
+      },
+      buttonOpen: {
+        backgroundColor: '#F194FF',
+      },
+      buttonClose: {
+        backgroundColor: '#2196F3',
+      },
+      textStyle: {
+        color: 'white',
+        fontWeight: 'bold',
+        textAlign: 'center',
+      },
+      modalText: {
+        marginBottom: 15,
+        textAlign: 'center',
+      },
 })

@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
-import { Button, ImageBackground, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Button, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SetGoal() {
@@ -39,51 +39,43 @@ export default function SetGoal() {
             {
                 showModal && minutes ?
                     <>
-                        <ImageBackground style={styles.image} resizeMode='cover'
-                            source={require('../assets/images/begin-story.jpg')}>
-                            {/* todo - image attribution: <a href="https://www.freepik.com/free-photo/magic-fairytale-book-concept_38110873.htm#fromView=search&page=1&position=0&uuid=8fcd2fa7-7f8c-4087-9e7e-6f8101cffaf2">Image by freepik</a> */}
-                            <View style={styles.container} height={'80%'}>
-                                <Text style={styles.title} padding={30}>How does it work?</Text>
-                                <Text style={styles.desc}>
-                                    Your daily goal will slowly increase basing upon how many minutes you manage to read every day. {"\n"}
+                        <View style={styles.container} height={'80%'}>
+                            <Text style={styles.title} padding={30}>How does it work?</Text>
+                            <Text style={styles.desc}>
+                                Your daily goal will slowly increase basing upon how many minutes you manage to read every day. {"\n"}
                                 This will help you stay consistent and read more, day by day.
-                                </Text>
-                                <Button
-                                    color='#bf6204'
-                                    title='MAKE THE STORY BEGIN'
-                                    aria-label='Send Goal Button'
-                                    onPress={onPress}
-                                />
-                            </View>
-                        </ImageBackground>
+                            </Text>
+                            <Button
+                                color='#bf6204'
+                                title='MAKE THE STORY BEGIN'
+                                aria-label='Send Goal Button'
+                                onPress={onPress}
+                            />
+                        </View>
                     </>
                     :
                     <>
-                        <ImageBackground style={styles.image} resizeMode='cover'
-                            source={require('../assets/images/books-background.jpg')}>
-                            {/* todo - image attribution: <a href="https://www.freepik.com/free-photo/front-view-books-with-copy-space_5207379.htm#fromView=search&page=1&position=15&uuid=98afacbb-1ab7-4d6a-8194-1bc53fc81f8d">Image by freepik</a> */}
-                            <View style={styles.container}>
-                                <Text style={styles.title}>Let's set your first reading goal!</Text>
-                                <TextInput
-                                    value={minutes}
-                                    style={styles.input}
-                                    keyboardType='numeric'
-                                    placeholder='Today, I will read for...'
-                                    placeholderTextColor='white'
-                                    onChangeText={onChangeText}
+                        <View style={styles.container}>
+                            <Text style={styles.title}>Let's set your first reading goal!</Text>
+                            <TextInput
+                                value={minutes}
+                                style={styles.input}
+                                keyboardType='numeric'
+                                placeholder='Today, I will read for...'
+                                placeholderTextColor='white'
+                                onChangeText={onChangeText}
+                            />
+                            <Text style={{ color: '#ffff', fontSize: 16, paddingBottom: 30 }}>minutes</Text>
+                            <View style={{ width: 150, marginTop: 30 }}>
+                                <Button
+                                    color='#bf6204'
+                                    title='SEND'
+                                    aria-label='Send Goal Button'
+                                    onPress={onSend}
+                                    disabled={!minutes}
                                 />
-                                <Text style={{ color: '#ffff', fontSize: 16, paddingBottom: 30 }}>minutes</Text>
-                                <View style={{ width:150, marginTop: 30 }}>
-                                    <Button
-                                        color='#bf6204'
-                                        title='SEND'
-                                        aria-label='Send Goal Button'
-                                        onPress={onSend}
-                                        disabled={!minutes}
-                                    />
-                                </View>
                             </View>
-                        </ImageBackground>
+                        </View>
                     </>
             }
         </SafeAreaView>
