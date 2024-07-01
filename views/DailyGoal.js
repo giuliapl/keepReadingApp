@@ -1,7 +1,7 @@
 import { Button, Modal, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { DAILY_MINUTES_GOAL, DONE_DATES, LAST_CHECK_DATE } from '../constants/storage.const';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome5, Fontisto, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -10,8 +10,6 @@ export const INCREMENT_DECREMENT_PERCENTAGE = 0.10;
 
 export default function DailyGoal() {
     const navigation = useNavigation();
-    const route = useRoute();
-    const params = route.params;
     const [minutes, setMinutes] = useState(null);
     const [isGoalMet, setIsGoalMet] = useState(false);
     const [totalMinutes, setTotalMinutes] = useState(0);
@@ -23,18 +21,18 @@ export default function DailyGoal() {
     }, [])
     useFocusEffect(() => {
         getData();
-        getTotalMinutes();
-        if (!params?.goalMet) {
+        calculateTotalMinutes();
+        if (!isGoalMet) {
             checkStorageGoalMet();
-        } else {
-            setIsGoalMet(true);
         }
     });
 
     const onChangeDoneMinutesText = (e) => { setDoneMinutes(e) };
-    const onSendDoneMinutes = () => {
+    const onSendDoneMinutes = async () => {
         setModalVisible(false);
-        updateData(doneMinutes);
+        setIsGoalMet(true);
+        await updateData(doneMinutes);
+        calculateTotalMinutes();
     };
     const updateData = async (value) => {
         try {
@@ -95,7 +93,7 @@ export default function DailyGoal() {
             console.error('data not found');
         }
     };
-    const getTotalMinutes = async () => {
+    const calculateTotalMinutes = async () => {
         const data = await AsyncStorage.getItem(DONE_DATES);
         const wrapper = JSON.parse(data);
         const minutesList = wrapper?.completed?.map((obj) => obj.minutes);
@@ -108,42 +106,40 @@ export default function DailyGoal() {
 
     return (
         <SafeAreaView style={styles.mainContainer}>
-            {
-                isGoalMet ?
-                    <>
-                        {/* @todo: ui */}
-                        <View>
-                            <Text style={styles.title}>Cheers!</Text>
-                            <Text fontSize={18} paddingBottom={30}>You have completed your daily goal</Text>
+            <>
+                <LinearGradient start={{ x: 1.5, y: 0.5 }} colors={['#ff5c83', '#ffb688']} style={{ height: '100%', width: '100%' }}>
+                    <View style={styles.container}>
+                        <View style={styles.upper}>
+                            {
+                                !isGoalMet ?
+                                    <>
+                                        <Text style={styles.title}>Today Reading Goal:</Text>
+                                        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#ffff' }}>{minutes} minutes</Text>
+                                    </>
+                                    :
+                                    <>
+                                        <Text style={styles.title}>Cheers</Text>
+                                        <Button
+                                            color='#20B2AA'
+                                            title='clear!'
+                                            aria-label='clear storage Button'
+                                            onPress={async () => await AsyncStorage.clear()}
+                                        />
+                                    </>
+                            }
                         </View>
-                        <Button
-                            color='#20B2AA'
-                            title='clear!'
-                            aria-label='clear storage Button'
-                            onPress={async () => await AsyncStorage.clear()}
-                        />
-                    </>
-                    :
-                    <>
-                        <LinearGradient start={{ x: 1.5, y: 0.5 }} colors={['#ff5c83', '#ffb688']} style={{ height: '100%', width: '100%' }}>
-                            <View style={styles.container}>
-                                <View style={styles.upper}>
-                                    <Text style={styles.title}>Today Reading Goal:</Text>
-                                    <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#ffff' }}>{minutes} minutes</Text>
-                                </View>
-                                <Pressable style={styles.middle} elevation={5} onPress={onDone}>
-                                    <FontAwesome5 name="check" size={50} color={'#ffff'} />
-                                </Pressable>
-                                <View style={styles.lower}>
-                                    <View elevation={5} style={styles.card}>
-                                        <Text style={styles.cardContent}>Total time spent reading since day one:</Text>
-                                        <Text style={styles.cardContentDesc}>{totalMinutes} minutes</Text>
-                                    </View>
-                                </View>
+                        <Pressable disabled={isGoalMet} elevation={5} onPress={onDone} style={isGoalMet ? {...styles.middle, ...styles.middleDisabled} : styles.middle}>
+                            <FontAwesome5 name="check" size={50} color={'#ffff'} />
+                        </Pressable>
+                        <View style={styles.lower}>
+                            <View elevation={5} style={styles.card}>
+                                <Text style={styles.cardContent}>Total time spent reading since day one:</Text>
+                                <Text style={styles.cardContentDesc}>{totalMinutes} minutes</Text>
                             </View>
-                        </LinearGradient>
-                    </>
-            }
+                        </View>
+                    </View>
+                </LinearGradient>
+            </>
             <Modal
                 animationType={'fade'}
                 transparent={true}
@@ -222,6 +218,9 @@ const styles = StyleSheet.create({
         },
         shadowRadius: 5,
         shadowOpacity: .5
+    },
+    middleDisabled: {
+        opacity: .7,
     },
     lower: {
         width: '100%',
