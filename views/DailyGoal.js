@@ -1,10 +1,10 @@
-import { Button, Modal, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Button, Modal, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { DAILY_MINUTES_GOAL, DONE_DATES, LAST_CHECK_DATE } from '../constants/storage.const';
 import { LinearGradient } from 'expo-linear-gradient';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome5, Fontisto, MaterialCommunityIcons } from '@expo/vector-icons';
 
 export const INCREMENT_DECREMENT_PERCENTAGE = 0.10;
 
@@ -16,6 +16,8 @@ export default function DailyGoal() {
     const [isGoalMet, setIsGoalMet] = useState(false);
     const [totalMinutes, setTotalMinutes] = useState(0);
     const [modalVisible, setModalVisible] = useState(false);
+    const [doneMinutes, setDoneMinutes] = useState('');
+
     useEffect(() => {
         handleGoal();
     }, [])
@@ -28,6 +30,36 @@ export default function DailyGoal() {
             setIsGoalMet(true);
         }
     });
+
+    const onChangeDoneMinutesText = (e) => { setDoneMinutes(e) };
+    const onSendDoneMinutes = () => {
+        setModalVisible(false);
+        updateData(doneMinutes);
+    };
+    const updateData = async (value) => {
+        try {
+            if (!await AsyncStorage.getItem(DONE_DATES)) {
+                const all = [{ date: new Date().toLocaleDateString(), minutes: value }];
+                const wrapper = { completed: [...all] };
+                await AsyncStorage.setItem(DONE_DATES, JSON.stringify(wrapper));
+            } else {
+                const prevMinutes = await AsyncStorage.getItem(DONE_DATES);
+                const wrapper = JSON.parse(prevMinutes);
+                const list = [{ date: new Date().toLocaleDateString(), minutes: value }, ...wrapper?.completed];
+                wrapper.completed = list;
+                const serializedWrapper = JSON.stringify(wrapper);
+                await AsyncStorage.setItem(DONE_DATES, serializedWrapper);
+            }
+            setNewGoal(value);
+        } catch (e) {
+            console.error('data not stored correctly')
+        }
+    };
+    const setNewGoal = async (todayMinutes) => {
+        const newDailyGoal = parseInt(todayMinutes) + parseInt(todayMinutes * INCREMENT_DECREMENT_PERCENTAGE);
+        await AsyncStorage.setItem(DAILY_MINUTES_GOAL, newDailyGoal.toString());
+        await AsyncStorage.setItem(LAST_CHECK_DATE, new Date().toLocaleDateString());
+    }
     const handleGoal = async () => {
         const lastCheckDate = await AsyncStorage.getItem(LAST_CHECK_DATE);
         if (!lastCheckDate) return;
@@ -71,7 +103,6 @@ export default function DailyGoal() {
         if (total) setTotalMinutes(total);
     }
     const onDone = () => {
-        // navigation.navigate('Done');
         setModalVisible(true);
     }
 
@@ -80,6 +111,7 @@ export default function DailyGoal() {
             {
                 isGoalMet ?
                     <>
+                        {/* @todo: ui */}
                         <View>
                             <Text style={styles.title}>Cheers!</Text>
                             <Text fontSize={18} paddingBottom={30}>You have completed your daily goal</Text>
@@ -122,20 +154,30 @@ export default function DailyGoal() {
             >
                 <View style={styles.modalContainer}>
                     <View style={styles.modalView}>
-                        <Text style={styles.modalText}>Hello World!</Text>
                         <Pressable
-                            style={[styles.button, styles.buttonClose]}
+                            style={styles.buttonClose}
                             onPress={() => setModalVisible(!modalVisible)}>
-                            <Text style={styles.textStyle}>Hide Modal</Text>
+                            <Fontisto name="close-a" size={15} color={'#ff5c83'} />
+                        </Pressable>
+                        <Text style={{ fontSize: 24, marginBottom: 30, }} >Great job!</Text>
+                        <Text style={styles.modalText}>How long did you read today?</Text>
+                        <TextInput
+                            selectionColor={'#ff5c83'}
+                            inputMode='numeric'
+                            placeholder='I read for ... minutes'
+                            onChangeText={onChangeDoneMinutesText}
+                            value={doneMinutes}
+                        />
+                        <Pressable
+                            style={styles.buttonSubmit}
+                            aria-label='Send Actual Minutes Button'
+                            disabled={!minutes}
+                            onPress={onSendDoneMinutes}>
+                            <MaterialCommunityIcons name="send-check-outline" size={50} color={'#ffff'} />
                         </Pressable>
                     </View>
                 </View>
             </Modal>
-            <Pressable
-                style={[styles.button, styles.buttonOpen]}
-                onPress={() => setModalVisible(true)}>
-                <Text style={styles.textStyle}>Show Modal</Text>
-            </Pressable>
         </SafeAreaView >
     );
 }
@@ -217,14 +259,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         padding: 10,
     },
-    // modalContainer: {
-    //     position: 'absolute',
-    //     width: '100%',
-    //     height: '100%',
-    //     justifyContent: 'center',
-    //     backgroundColor: 'rgba(100,100,100, 0.5)',
-    //     padding: 20,
-    // },
     modalContainer: {
         position: 'absolute',
         width: '100%',
@@ -236,40 +270,48 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 22,
-      },
-      modalView: {
-        margin: 20,
+    },
+    modalView: {
+        justifyContent: 'center',
+        flexDirection: 'column',
+        alignItems: 'center',
         backgroundColor: 'white',
         borderRadius: 20,
         padding: 35,
         alignItems: 'center',
         shadowColor: '#000',
         shadowOffset: {
-          width: 0,
-          height: 2,
+            width: 0,
+            height: 2,
         },
         shadowOpacity: 0.25,
         shadowRadius: 4,
         elevation: 5,
-      },
-      button: {
-        borderRadius: 20,
+        width: '100%',
+    },
+    buttonSubmit: {
+        borderRadius: 100,
         padding: 10,
-        elevation: 2,
-      },
-      buttonOpen: {
-        backgroundColor: '#F194FF',
-      },
-      buttonClose: {
-        backgroundColor: '#2196F3',
-      },
-      textStyle: {
+        elevation: 3,
+        backgroundColor: '#ff5c83',
+        marginTop: 20,
+        width: '30%',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    buttonClose: {
+        alignSelf: 'flex-end',
+        paddingBottom: 10,
+    },
+    btnModalText: {
         color: 'white',
         fontWeight: 'bold',
         textAlign: 'center',
-      },
-      modalText: {
+    },
+    modalText: {
         marginBottom: 15,
         textAlign: 'center',
-      },
+        fontSize: 20,
+        fontWeight: 'bold'
+    },
 })
