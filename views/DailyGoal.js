@@ -1,20 +1,20 @@
 import { Button, Modal, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import { DAILY_MINUTES_GOAL, DONE_DATES, LAST_CHECK_DATE } from '../constants/storage.const';
 import { LinearGradient } from 'expo-linear-gradient';
-import { FontAwesome5, Fontisto, MaterialCommunityIcons } from '@expo/vector-icons';
+import { FontAwesome5, FontAwesome6, Fontisto, MaterialCommunityIcons } from '@expo/vector-icons';
 
 export const INCREMENT_DECREMENT_PERCENTAGE = 0.10;
 
 export default function DailyGoal() {
-    const navigation = useNavigation();
     const [minutes, setMinutes] = useState(null);
     const [isGoalMet, setIsGoalMet] = useState(false);
     const [totalMinutes, setTotalMinutes] = useState(0);
-    const [modalVisible, setModalVisible] = useState(false);
+    const [afterDoneModalVisible, setAfterDoneModalVisible] = useState(false);
     const [doneMinutes, setDoneMinutes] = useState('');
+    const [firstGoalModalVisible, setFirstGoalModalVisible] = useState(false);
 
     useEffect(() => {
         handleGoal();
@@ -29,7 +29,7 @@ export default function DailyGoal() {
 
     const onChangeDoneMinutesText = (e) => { setDoneMinutes(e) };
     const onSendDoneMinutes = async () => {
-        setModalVisible(false);
+        setAfterDoneModalVisible(false);
         setIsGoalMet(true);
         await updateData(doneMinutes);
         calculateTotalMinutes();
@@ -87,7 +87,7 @@ export default function DailyGoal() {
             if (value !== null) {
                 setMinutes(value);
             } else {
-                navigation.navigate('SetGoal');
+                setFirstGoalModalVisible(true);
             }
         } catch (e) {
             console.error('data not found');
@@ -101,8 +101,22 @@ export default function DailyGoal() {
         if (total) setTotalMinutes(total);
     }
     const onDone = () => {
-        setModalVisible(true);
+        setAfterDoneModalVisible(true);
     }
+
+    const onChangeText = (e) => { setMinutes(e) };
+    const onSendFirstGoal = () => {
+        if (minutes) storeData(minutes);
+        setFirstGoalModalVisible((prev) => !prev);
+    };
+
+    const storeData = async (value) => {
+        try {
+            await AsyncStorage.setItem('daily-minutes-goal', value);
+        } catch (e) {
+            console.error('data not stored correctly')
+        }
+    };
 
     return (
         <SafeAreaView style={styles.mainContainer}>
@@ -114,11 +128,13 @@ export default function DailyGoal() {
                                 !isGoalMet ?
                                     <>
                                         <Text style={styles.title}>Today Reading Goal:</Text>
-                                        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#ffff' }}>{minutes} minutes</Text>
+                                        <Text style={styles.subtitle}>{minutes} minutes</Text>
                                     </>
                                     :
                                     <>
-                                        <Text style={styles.title}>Cheers</Text>
+                                        <Text style={styles.title}>Cheers!</Text>
+                                        <FontAwesome6 name="hands-clapping" size={60} color={'#ffff'} />
+                                        <Text style={styles.subtitle} padding={30}>You Completed Your Daily Goal</Text>
                                         <Button
                                             color='#20B2AA'
                                             title='clear!'
@@ -128,7 +144,7 @@ export default function DailyGoal() {
                                     </>
                             }
                         </View>
-                        <Pressable disabled={isGoalMet} elevation={5} onPress={onDone} style={isGoalMet ? {...styles.middle, ...styles.middleDisabled} : styles.middle}>
+                        <Pressable disabled={isGoalMet} elevation={5} onPress={onDone} style={isGoalMet ? { ...styles.middle, ...styles.middleDisabled } : styles.middle}>
                             <FontAwesome5 name="check" size={50} color={'#ffff'} />
                         </Pressable>
                         <View style={styles.lower}>
@@ -143,16 +159,16 @@ export default function DailyGoal() {
             <Modal
                 animationType={'fade'}
                 transparent={true}
-                visible={modalVisible}
+                visible={afterDoneModalVisible}
                 onRequestClose={() => {
-                    setModalVisible(false);
+                    setAfterDoneModalVisible(false);
                 }}
             >
                 <View style={styles.modalContainer}>
                     <View style={styles.modalView}>
                         <Pressable
                             style={styles.buttonClose}
-                            onPress={() => setModalVisible(!modalVisible)}>
+                            onPress={() => setAfterDoneModalVisible(!afterDoneModalVisible)}>
                             <Fontisto name="close-a" size={15} color={'#ff5c83'} />
                         </Pressable>
                         <Text style={{ fontSize: 24, marginBottom: 30, }} >Great job!</Text>
@@ -169,6 +185,40 @@ export default function DailyGoal() {
                             aria-label='Send Actual Minutes Button'
                             disabled={!minutes}
                             onPress={onSendDoneMinutes}>
+                            <MaterialCommunityIcons name="send-check-outline" size={50} color={'#ffff'} />
+                        </Pressable>
+                    </View>
+                </View>
+            </Modal>
+            <Modal
+                animationType={'fade'}
+                transparent={true}
+                visible={firstGoalModalVisible}
+                onRequestClose={() => {
+                    setFirstGoalModalVisible(false);
+                }}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalView}>
+                        <Pressable
+                            style={styles.buttonClose}
+                            onPress={() => setFirstGoalModalVisible(!firstGoalModalVisible)}>
+                            <Fontisto name="close-a" size={15} color={'#ff5c83'} />
+                        </Pressable>
+                        <Text style={{ fontSize: 24, marginBottom: 30, }}>Let's set your first reading goal!</Text>
+                        <Text style={styles.modalText}>How long will you read today?</Text>
+                        <TextInput
+                            selectionColor={'#ff5c83'}
+                            inputMode='numeric'
+                            placeholder='I will read for ... minutes'
+                            onChangeText={onChangeText}
+                            value={minutes}
+                        />
+                        <Pressable
+                            style={styles.buttonSubmit}
+                            aria-label='Send Actual Minutes Button'
+                            disabled={!minutes}
+                            onPress={onSendFirstGoal}>
                             <MaterialCommunityIcons name="send-check-outline" size={50} color={'#ffff'} />
                         </Pressable>
                     </View>
@@ -193,6 +243,11 @@ const styles = StyleSheet.create({
         fontSize: 30,
         paddingBottom: 20,
         color: '#ffff'
+    },
+    subtitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#ffff',
     },
     upper: {
         height: '50%',
