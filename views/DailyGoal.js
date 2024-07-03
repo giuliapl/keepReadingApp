@@ -1,10 +1,9 @@
 import { Button, Modal, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
 import { DAILY_GOAL, DONE_DATES, LAST_CHECK_DATE } from '../constants/storage.const';
 import { LinearGradient } from 'expo-linear-gradient';
-import { FontAwesome5, FontAwesome6, Fontisto } from '@expo/vector-icons';
+import { FontAwesome5, FontAwesome6, Fontisto, MaterialIcons } from '@expo/vector-icons';
 
 export const INCREMENT_DECREMENT_PERCENTAGE = 0.10;
 
@@ -12,20 +11,17 @@ export default function DailyGoal() {
     const [dailyGoal, setDailyGoal] = useState(null);
     const [isGoalMet, setIsGoalMet] = useState(false);
     const [totalMinutes, setTotalMinutes] = useState(0);
-    const [afterDoneModalVisible, setAfterDoneModalVisible] = useState(false);
     const [doneMinutes, setDoneMinutes] = useState('');
-    const [firstGoalModalVisible, setFirstGoalModalVisible] = useState(false);
+    const [afterDoneModalVisible, setAfterDoneModalVisible] = useState(false);
+    const [readingGoalModalVisible, setReadingGoalModalVisible] = useState(false);
 
     useEffect(() => {
-        checkAndDecrementDailyGoal();
-    }, [])
-    useFocusEffect(() => {
-        checkAndSetDailyGoal();
+        updateDailyGoal(); // to avoid racing conditions
         calculateTotalMinutes();
         if (!isGoalMet) {
             isTodayGoalMet();
         }
-    });
+    }, [])
 
     // Handlers
     const onChangeDoneMinutesText = (e) => { setDoneMinutes(e) };
@@ -39,9 +35,9 @@ export default function DailyGoal() {
         setAfterDoneModalVisible(true);
     }
     const onChangeText = (e) => { setDailyGoal(e) };
-    const onSendFirstGoal = () => {
+    const onSendReadingGoal = () => {
         if (dailyGoal) storeData(dailyGoal);
-        setFirstGoalModalVisible((prev) => !prev);
+        setReadingGoalModalVisible((prev) => !prev);
     };
 
     // Storage related
@@ -78,6 +74,18 @@ export default function DailyGoal() {
         await AsyncStorage.setItem(DAILY_GOAL, newDailyGoal.toString());
         await AsyncStorage.setItem(LAST_CHECK_DATE, new Date().toLocaleDateString());
     }
+    const checkAndSetDailyGoal = async () => {
+        try {
+            const value = await AsyncStorage.getItem(DAILY_GOAL);
+            if (value !== null) {
+                setDailyGoal(value);
+            } else {
+                setReadingGoalModalVisible(true);
+            }
+        } catch (e) {
+            console.error('data not found');
+        }
+    };
     const checkAndDecrementDailyGoal = async () => {
         const lastCheckDate = await AsyncStorage.getItem(LAST_CHECK_DATE);
         if (!lastCheckDate) return;
@@ -101,18 +109,6 @@ export default function DailyGoal() {
         const isTodayGoalMet = parsedDoneDates?.completed[0]?.date === new Date().toLocaleDateString();
         setIsGoalMet(isTodayGoalMet)
     }
-    const checkAndSetDailyGoal = async () => {
-        try {
-            const value = await AsyncStorage.getItem(DAILY_GOAL);
-            if (value !== null) {
-                setDailyGoal(value);
-            } else {
-                setFirstGoalModalVisible(true);
-            }
-        } catch (e) {
-            console.error('data not found');
-        }
-    };
     const calculateTotalMinutes = async () => {
         const data = await AsyncStorage.getItem(DONE_DATES);
         const wrapper = JSON.parse(data);
@@ -128,6 +124,10 @@ export default function DailyGoal() {
         minutes = minutes > 0 ? `${minutes}m` : '';
         return `${hours} ${minutes}`;
     }
+    const updateDailyGoal = async () => {
+        await checkAndDecrementDailyGoal();
+        checkAndSetDailyGoal();
+    }
 
 
     return (
@@ -140,7 +140,12 @@ export default function DailyGoal() {
                                 !isGoalMet ?
                                     <>
                                         <Text style={styles.title}>Today Reading Goal:</Text>
-                                        <Text style={styles.subtitle}>{parseTime(dailyGoal)}</Text>
+                                        <View style={styles.editContainer}>
+                                            <Text style={styles.subtitle}>{parseTime(dailyGoal)}</Text>
+                                            <Pressable onPress={onSendReadingGoal}>
+                                                <MaterialIcons name="edit" size={20} color={'#ffff'} marginLeft={10} />
+                                            </Pressable>
+                                        </View>
                                     </>
                                     :
                                     <>
@@ -209,19 +214,19 @@ export default function DailyGoal() {
             <Modal
                 animationType={'fade'}
                 transparent={true}
-                visible={firstGoalModalVisible}
+                visible={readingGoalModalVisible}
                 onRequestClose={() => {
-                    setFirstGoalModalVisible(false);
+                    setReadingGoalModalVisible(false);
                 }}
             >
                 <View style={styles.modalContainer}>
                     <View style={styles.modalView}>
                         <Pressable
                             style={styles.buttonClose}
-                            onPress={() => setFirstGoalModalVisible(!firstGoalModalVisible)}>
+                            onPress={() => setReadingGoalModalVisible(!readingGoalModalVisible)}>
                             <Fontisto name="close-a" size={15} color={'#ff5c83'} />
                         </Pressable>
-                        <Text style={{ fontSize: 24, marginBottom: 30, }}>Let's set your first reading goal!</Text>
+                        <Text style={{ fontSize: 24, marginBottom: 30, }}>Let's set your reading goal!</Text>
                         <Text style={styles.modalText}>How long will you read today?</Text>
                         <TextInput
                             selectionColor={'#ff5c83'}
@@ -234,7 +239,7 @@ export default function DailyGoal() {
                             style={dailyGoal ? styles.buttonSubmit : { ...styles.buttonSubmit, ...styles.buttonSubmitDisabled }}
                             aria-label='Send Actual Minutes Button'
                             disabled={!dailyGoal}
-                            onPress={onSendFirstGoal}>
+                            onPress={onSendReadingGoal}>
                             <Fontisto name="plus-a" size={15} color={'#ffff'} />
                             <Text style={{ color: '#ffff' }}>Add</Text>
                         </Pressable>
@@ -255,6 +260,10 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         width: '100%',
         height: '100%',
+    },
+    editContainer: {
+        alignItems: 'center',
+        flexDirection: 'row',
     },
     title: {
         fontSize: 30,
