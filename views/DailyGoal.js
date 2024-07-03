@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { DAILY_GOAL, DONE_DATES, LAST_CHECK_DATE } from '../constants/storage.const';
 import { LinearGradient } from 'expo-linear-gradient';
-import { FontAwesome5, FontAwesome6, Fontisto, MaterialCommunityIcons } from '@expo/vector-icons';
+import { FontAwesome5, FontAwesome6, Fontisto } from '@expo/vector-icons';
 
 export const INCREMENT_DECREMENT_PERCENTAGE = 0.10;
 
@@ -27,12 +27,30 @@ export default function DailyGoal() {
         }
     });
 
+    // Handlers
     const onChangeDoneMinutesText = (e) => { setDoneMinutes(e) };
     const onSendDoneMinutes = async () => {
         setAfterDoneModalVisible(false);
         setIsGoalMet(true);
         await updateData(doneMinutes);
         calculateTotalMinutes();
+    };
+    const onDone = () => {
+        setAfterDoneModalVisible(true);
+    }
+    const onChangeText = (e) => { setDailyGoal(e) };
+    const onSendFirstGoal = () => {
+        if (dailyGoal) storeData(dailyGoal);
+        setFirstGoalModalVisible((prev) => !prev);
+    };
+
+    // Storage related
+    const storeData = async (value) => {
+        try {
+            await AsyncStorage.setItem(DAILY_GOAL, value);
+        } catch (e) {
+            console.error('data not stored correctly')
+        }
     };
     const updateData = async (value) => {
         try {
@@ -53,6 +71,8 @@ export default function DailyGoal() {
             console.error('data not stored correctly')
         }
     };
+
+    // Business Logic
     const setNewGoal = async (todayMinutes) => {
         const newDailyGoal = parseInt(todayMinutes) + parseInt(todayMinutes * INCREMENT_DECREMENT_PERCENTAGE);
         await AsyncStorage.setItem(DAILY_GOAL, newDailyGoal.toString());
@@ -100,23 +120,15 @@ export default function DailyGoal() {
         const total = minutesList?.reduce((accumulator, currentValue) => parseInt(accumulator) + parseInt(currentValue));
         if (total) setTotalMinutes(total);
     }
-    const onDone = () => {
-        setAfterDoneModalVisible(true);
+    const parseTime = (t) => {
+        if (!t) return '0m';
+        let hours = Math.floor(t / 60);
+        hours = hours > 0 ? `${hours}h` : '';
+        let minutes = (t % 60);
+        minutes = minutes > 0 ? `${minutes}m` : '';
+        return `${hours} ${minutes}`;
     }
 
-    const onChangeText = (e) => { setDailyGoal(e) };
-    const onSendFirstGoal = () => {
-        if (dailyGoal) storeData(dailyGoal);
-        setFirstGoalModalVisible((prev) => !prev);
-    };
-
-    const storeData = async (value) => {
-        try {
-            await AsyncStorage.setItem('daily-goal', value);
-        } catch (e) {
-            console.error('data not stored correctly')
-        }
-    };
 
     return (
         <SafeAreaView style={styles.mainContainer}>
@@ -128,7 +140,7 @@ export default function DailyGoal() {
                                 !isGoalMet ?
                                     <>
                                         <Text style={styles.title}>Today Reading Goal:</Text>
-                                        <Text style={styles.subtitle}>{dailyGoal} minutes</Text>
+                                        <Text style={styles.subtitle}>{parseTime(dailyGoal)}</Text>
                                     </>
                                     :
                                     <>
@@ -147,14 +159,13 @@ export default function DailyGoal() {
                         {
                             !isGoalMet &&
                             <Pressable elevation={5} onPress={onDone} style={styles.middle}>
-                                {/*  disabled={isGoalMet} style={isGoalMet ? { ...styles.middle, ...styles.middleDisabled } : styles.middle} */}
                                 <FontAwesome5 name="check" size={50} color={'#ffff'} />
                             </Pressable>
                         }
                         <View style={styles.lower}>
                             <View elevation={5} style={styles.card}>
                                 <Text style={styles.cardContent}>Total time spent reading since day one:</Text>
-                                <Text style={styles.cardContentDesc}>{totalMinutes} minutes</Text>
+                                <Text style={styles.cardContentDesc}>{parseTime(totalMinutes)}</Text>
                             </View>
                         </View>
                     </View>
@@ -280,9 +291,6 @@ const styles = StyleSheet.create({
         shadowRadius: 5,
         shadowOpacity: .5
     },
-    // middleDisabled: {
-    //     opacity: .7,
-    // },
     lower: {
         width: '100%',
         height: '50%',
