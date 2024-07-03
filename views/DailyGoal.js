@@ -2,14 +2,14 @@ import { Button, Modal, Pressable, SafeAreaView, StyleSheet, Text, TextInput, Vi
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { DAILY_MINUTES_GOAL, DONE_DATES, LAST_CHECK_DATE } from '../constants/storage.const';
+import { DAILY_GOAL, DONE_DATES, LAST_CHECK_DATE } from '../constants/storage.const';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome5, FontAwesome6, Fontisto, MaterialCommunityIcons } from '@expo/vector-icons';
 
 export const INCREMENT_DECREMENT_PERCENTAGE = 0.10;
 
 export default function DailyGoal() {
-    const [minutes, setMinutes] = useState(null);
+    const [dailyGoal, setDailyGoal] = useState(null);
     const [isGoalMet, setIsGoalMet] = useState(false);
     const [totalMinutes, setTotalMinutes] = useState(0);
     const [afterDoneModalVisible, setAfterDoneModalVisible] = useState(false);
@@ -17,13 +17,13 @@ export default function DailyGoal() {
     const [firstGoalModalVisible, setFirstGoalModalVisible] = useState(false);
 
     useEffect(() => {
-        handleGoal();
+        checkAndDecrementDailyGoal();
     }, [])
     useFocusEffect(() => {
-        getData();
+        checkAndSetDailyGoal();
         calculateTotalMinutes();
         if (!isGoalMet) {
-            checkStorageGoalMet();
+            isTodayGoalMet();
         }
     });
 
@@ -55,10 +55,10 @@ export default function DailyGoal() {
     };
     const setNewGoal = async (todayMinutes) => {
         const newDailyGoal = parseInt(todayMinutes) + parseInt(todayMinutes * INCREMENT_DECREMENT_PERCENTAGE);
-        await AsyncStorage.setItem(DAILY_MINUTES_GOAL, newDailyGoal.toString());
+        await AsyncStorage.setItem(DAILY_GOAL, newDailyGoal.toString());
         await AsyncStorage.setItem(LAST_CHECK_DATE, new Date().toLocaleDateString());
     }
-    const handleGoal = async () => {
+    const checkAndDecrementDailyGoal = async () => {
         const lastCheckDate = await AsyncStorage.getItem(LAST_CHECK_DATE);
         if (!lastCheckDate) return;
         if (lastCheckDate !== new Date().toLocaleDateString()) {
@@ -67,25 +67,25 @@ export default function DailyGoal() {
             let yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
             if (wrapper.completed[0].date !== yesterday.toLocaleDateString()) {
-                const prevGoal = await AsyncStorage.getItem(DAILY_MINUTES_GOAL);
+                const prevGoal = await AsyncStorage.getItem(DAILY_GOAL);
                 const newGoal = parseInt(prevGoal) - parseInt(prevGoal * INCREMENT_DECREMENT_PERCENTAGE);
-                await AsyncStorage.setItem(DAILY_MINUTES_GOAL, newGoal.toString());
+                await AsyncStorage.setItem(DAILY_GOAL, newGoal.toString());
                 await AsyncStorage.setItem(LAST_CHECK_DATE, new Date().toLocaleDateString());
-                setMinutes(newGoal);
+                setDailyGoal(newGoal);
             }
         }
     }
-    const checkStorageGoalMet = async () => {
+    const isTodayGoalMet = async () => {
         const doneDatesStorage = await AsyncStorage.getItem(DONE_DATES);
         const parsedDoneDates = JSON.parse(doneDatesStorage);
         const isTodayGoalMet = parsedDoneDates?.completed[0]?.date === new Date().toLocaleDateString();
         setIsGoalMet(isTodayGoalMet)
     }
-    const getData = async () => {
+    const checkAndSetDailyGoal = async () => {
         try {
-            const value = await AsyncStorage.getItem(DAILY_MINUTES_GOAL);
+            const value = await AsyncStorage.getItem(DAILY_GOAL);
             if (value !== null) {
-                setMinutes(value);
+                setDailyGoal(value);
             } else {
                 setFirstGoalModalVisible(true);
             }
@@ -104,15 +104,15 @@ export default function DailyGoal() {
         setAfterDoneModalVisible(true);
     }
 
-    const onChangeText = (e) => { setMinutes(e) };
+    const onChangeText = (e) => { setDailyGoal(e) };
     const onSendFirstGoal = () => {
-        if (minutes) storeData(minutes);
+        if (dailyGoal) storeData(dailyGoal);
         setFirstGoalModalVisible((prev) => !prev);
     };
 
     const storeData = async (value) => {
         try {
-            await AsyncStorage.setItem('daily-minutes-goal', value);
+            await AsyncStorage.setItem('daily-goal', value);
         } catch (e) {
             console.error('data not stored correctly')
         }
@@ -128,7 +128,7 @@ export default function DailyGoal() {
                                 !isGoalMet ?
                                     <>
                                         <Text style={styles.title}>Today Reading Goal:</Text>
-                                        <Text style={styles.subtitle}>{minutes} minutes</Text>
+                                        <Text style={styles.subtitle}>{dailyGoal} minutes</Text>
                                     </>
                                     :
                                     <>
@@ -144,9 +144,13 @@ export default function DailyGoal() {
                                     </>
                             }
                         </View>
-                        <Pressable disabled={isGoalMet} elevation={5} onPress={onDone} style={isGoalMet ? { ...styles.middle, ...styles.middleDisabled } : styles.middle}>
-                            <FontAwesome5 name="check" size={50} color={'#ffff'} />
-                        </Pressable>
+                        {
+                            !isGoalMet &&
+                            <Pressable elevation={5} onPress={onDone} style={styles.middle}>
+                                {/*  disabled={isGoalMet} style={isGoalMet ? { ...styles.middle, ...styles.middleDisabled } : styles.middle} */}
+                                <FontAwesome5 name="check" size={50} color={'#ffff'} />
+                            </Pressable>
+                        }
                         <View style={styles.lower}>
                             <View elevation={5} style={styles.card}>
                                 <Text style={styles.cardContent}>Total time spent reading since day one:</Text>
@@ -181,11 +185,12 @@ export default function DailyGoal() {
                             value={doneMinutes}
                         />
                         <Pressable
-                            style={styles.buttonSubmit}
+                            style={doneMinutes ? styles.buttonSubmit : { ...styles.buttonSubmit, ...styles.buttonSubmitDisabled }}
                             aria-label='Send Actual Minutes Button'
-                            disabled={!minutes}
+                            disabled={!doneMinutes}
                             onPress={onSendDoneMinutes}>
-                            <MaterialCommunityIcons name="send-check-outline" size={50} color={'#ffff'} />
+                            <Fontisto name="plus-a" size={15} color={'#ffff'} />
+                            <Text style={{ color: '#ffff' }}>Add</Text>
                         </Pressable>
                     </View>
                 </View>
@@ -212,14 +217,15 @@ export default function DailyGoal() {
                             inputMode='numeric'
                             placeholder='I will read for ... minutes'
                             onChangeText={onChangeText}
-                            value={minutes}
+                            value={dailyGoal}
                         />
                         <Pressable
-                            style={styles.buttonSubmit}
+                            style={dailyGoal ? styles.buttonSubmit : { ...styles.buttonSubmit, ...styles.buttonSubmitDisabled }}
                             aria-label='Send Actual Minutes Button'
-                            disabled={!minutes}
+                            disabled={!dailyGoal}
                             onPress={onSendFirstGoal}>
-                            <MaterialCommunityIcons name="send-check-outline" size={50} color={'#ffff'} />
+                            <Fontisto name="plus-a" size={15} color={'#ffff'} />
+                            <Text style={{ color: '#ffff' }}>Add</Text>
                         </Pressable>
                     </View>
                 </View>
@@ -274,9 +280,9 @@ const styles = StyleSheet.create({
         shadowRadius: 5,
         shadowOpacity: .5
     },
-    middleDisabled: {
-        opacity: .7,
-    },
+    // middleDisabled: {
+    //     opacity: .7,
+    // },
     lower: {
         width: '100%',
         height: '50%',
@@ -351,7 +357,11 @@ const styles = StyleSheet.create({
         marginTop: 20,
         width: '30%',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-evenly',
+        flexDirection: 'row'
+    },
+    buttonSubmitDisabled: {
+        opacity: .7,
     },
     buttonClose: {
         alignSelf: 'flex-end',
