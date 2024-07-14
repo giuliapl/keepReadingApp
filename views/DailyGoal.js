@@ -152,12 +152,6 @@ export default function DailyGoal() {
                                         <Text style={styles.title}>Cheers!</Text>
                                         <FontAwesome6 name="hands-clapping" size={60} color={'#ffff'} />
                                         <Text style={styles.subtitle} padding={30}>You Completed Your Daily Goal</Text>
-                                        <Button
-                                            color='#20B2AA'
-                                            title='clear!'
-                                            aria-label='clear storage Button'
-                                            onPress={async () => await AsyncStorage.clear()}
-                                        />
                                     </>
                             }
                         </View>
